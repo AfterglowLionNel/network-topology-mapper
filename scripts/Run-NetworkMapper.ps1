@@ -284,7 +284,7 @@ if ($Monitor) {
 if ($PublicReport) {
     $dataPath = Join-Path $PSScriptRoot '..\output\network-data.json'
     if (-not (Test-Path $dataPath)) {
-        throw '公開用レポートの元データがありません。先に [2] 詳細LAN調査を実行してください。'
+        throw '公開用レポートの元データがありません。先にフル実行または詳細LAN調査を実行してください。'
     }
     Write-Host ''
     Write-Host '===================================' -ForegroundColor Magenta
@@ -414,7 +414,7 @@ if ($Notify -and (Test-Path $alertScript)) {
 }
 
 $htmlPath = (Resolve-Path (Join-Path $PSScriptRoot '..\output\diagram.html')).Path
-Write-Host "`n完了しました: $htmlPath" -ForegroundColor Green
+Write-Host "`n完了しました。HTMLレポートをブラウザで開きます: $htmlPath" -ForegroundColor Green
 if (-not $NoOpen) {
     try { Start-Process $htmlPath } catch { Write-Host '[!] ブラウザを開けませんでした。上記ファイルを直接開いてください。' -ForegroundColor Yellow }
 }

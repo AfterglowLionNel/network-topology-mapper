@@ -23,75 +23,62 @@ function Write-Header {
     $psv = "$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
     Write-Host "  PowerShell バージョン: $psv" -ForegroundColor DarkGray
     if ($PSVersionTable.PSVersion.Major -lt 7) {
-        Write-Host "  ※ PowerShell 7 が未導入です。[2] 詳細LAN調査では導入案内を表示します（無くても動作します）" -ForegroundColor DarkGray
+        Write-Host "  ※ PowerShell 7 が未導入です。フル実行時に導入案内を表示します（無くても動作します）" -ForegroundColor DarkGray
     }
     Write-Host ""
 }
 
 function Show-Menu {
-    param([bool]$LightMode)
-
     Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
     Write-Host "  メニュー" -ForegroundColor Yellow
     Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "    [1] " -NoNewline -ForegroundColor Cyan
-    Write-Host "基本診断" -ForegroundColor Green -NoNewline
-    Write-Host " (推奨)              約10秒  PC・NIC・ルーターまでを確認" -ForegroundColor DarkGray
-    Write-Host "                                  (LAN全探索・外部サービス通信なし)" -ForegroundColor DarkGray
+    Write-Host "フル実行" -ForegroundColor Green -NoNewline
+    Write-Host " (推奨)              診断・速度測定・LAN構成図・機器特定" -ForegroundColor DarkGray
+    Write-Host "                                  完了後にHTMLレポートを自動で開く" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "    [2] " -NoNewline -ForegroundColor Cyan
-    Write-Host "詳細LAN調査" -ForegroundColor White -NoNewline
-    Write-Host "                 約1-5分  構成図と機器情報を作る" -ForegroundColor DarkGray
-    Write-Host "                                  (対象範囲を表示し、確認後に開始)" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    [V] " -NoNewline -ForegroundColor Cyan
-    Write-Host "インターネット速度測定" -ForegroundColor White -NoNewline
-    Write-Host "       Cloudflareへ最大 約200MB" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    [3] " -NoNewline -ForegroundColor Cyan
-    Write-Host "モニタモード" -ForegroundColor White -NoNewline
-    Write-Host "               約60秒  ルーターへの遅延スパイク/瞬断を監視" -ForegroundColor DarkGray
-    Write-Host "                                  (たまに遅い/切れる時に)" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    [F] " -NoNewline -ForegroundColor Cyan
-    Write-Host "設定の不備を修正" -ForegroundColor White -NoNewline
-    Write-Host "           診断で見つかったPC側の設定を直す" -ForegroundColor DarkGray
-    Write-Host "                                  (内容を確認してから適用/元に戻せます)" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    [S] " -NoNewline -ForegroundColor Cyan
-    Write-Host "定期実行の設定" -ForegroundColor White -NoNewline
-    Write-Host "             毎日決まった時刻に診断/監視を自動実行" -ForegroundColor DarkGray
-    Write-Host "                                  (推移グラフが溜まり比較できます)" -ForegroundColor DarkGray
+    Write-Host "その他の機能" -ForegroundColor White -NoNewline
+    Write-Host "                 基本診断・モニタ・修復・設定など" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "    [O] " -NoNewline -ForegroundColor Cyan
     Write-Host "前回の結果を開く" -ForegroundColor White -NoNewline
     Write-Host "           output\diagram.html を表示" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "    [P] " -NoNewline -ForegroundColor Cyan
-    Write-Host "公開用レポートを作る" -ForegroundColor White -NoNewline
-    Write-Host "         識別情報を仮名化して別ファイルへ保存" -ForegroundColor DarkGray
-    Write-Host ""
     Write-Host "    [H] " -NoNewline -ForegroundColor Cyan
     Write-Host "ヘルプ" -ForegroundColor White -NoNewline
     Write-Host "                     使い方・結果の見方をブラウザで開く" -ForegroundColor DarkGray
-    Write-Host ""
-    $lightState = if ($LightMode) { "ON " } else { "OFF" }
-    $lightColor = if ($LightMode) { "Green" } else { "DarkGray" }
-    Write-Host "    [L] " -NoNewline -ForegroundColor Cyan
-    Write-Host "軽量モード切替 [" -ForegroundColor White -NoNewline
-    Write-Host $lightState -ForegroundColor $lightColor -NoNewline
-    Write-Host "]" -ForegroundColor White -NoNewline
-    Write-Host "    機器が多い環境で [2] を高速化" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "    [Q] " -NoNewline -ForegroundColor DarkGray
     Write-Host "終了" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
-    if ($LightMode) {
-        Write-Host "  ※ 軽量モード ON: 重い機器特定(NetBIOS/HTTP)を省略し高速描画します" -ForegroundColor Green
-        Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
-    }
+}
+
+function Show-OtherMenu {
+    param([bool]$LightMode)
+
+    Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
+    Write-Host "  その他の機能" -ForegroundColor Yellow
+    Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "    [1] 基本診断                    約10秒・LAN全探索なし" -ForegroundColor White
+    Write-Host "    [2] LANレポート                 外部通信・速度測定なし" -ForegroundColor White
+    Write-Host "    [V] インターネット速度測定      最大 約200MB" -ForegroundColor White
+    Write-Host "    [3] モニタモード                遅延・瞬断を連続監視" -ForegroundColor White
+    Write-Host "    [F] PC設定の修復                 確認後に適用・元に戻せる" -ForegroundColor White
+    Write-Host "    [S] 定期実行の設定" -ForegroundColor White
+    Write-Host "    [P] 公開用レポートを作る" -ForegroundColor White
+    Write-Host ""
+    $lightState = if ($LightMode) { "ON " } else { "OFF" }
+    $lightColor = if ($LightMode) { "Green" } else { "DarkGray" }
+    Write-Host "    [L] 軽量モード [" -NoNewline -ForegroundColor White
+    Write-Host $lightState -NoNewline -ForegroundColor $lightColor
+    Write-Host "]                 LAN調査の機器特定を高速化" -ForegroundColor White
+    Write-Host "    [B] 戻る" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
 }
 
 function Invoke-MapperWithArgs {
@@ -142,7 +129,7 @@ function Invoke-SettingRepair {
     }
     if (-not (Test-Path $healthPath)) {
         Write-Host ""
-        Write-Host "  先に [1] 基本診断 または [2] 詳細LAN調査を実行してください（診断結果をもとに修正内容を決めます）" -ForegroundColor Yellow
+        Write-Host "  先にフル実行または基本診断を実行してください（診断結果をもとに修正内容を決めます）" -ForegroundColor Yellow
         Read-Host "  Enter で戻る"
         return
     }
@@ -301,92 +288,125 @@ function Open-LastResult {
             Write-Host "  ブラウザを自動起動できませんでした: $htmlPath" -ForegroundColor Yellow
         }
     } else {
-        Write-Host "  まだレポートが生成されていません。先にメニュー [2] を実行してください" -ForegroundColor Yellow
+        Write-Host "  まだレポートが生成されていません。先にメニュー [1] のフル実行を行ってください" -ForegroundColor Yellow
     }
     Start-Sleep -Seconds 2
+}
+
+function Invoke-LanReport {
+    param(
+        [bool]$LightMode,
+        [switch]$IncludeInternet
+    )
+
+    if ($PSVersionTable.PSVersion.Major -lt 7) {
+        Write-Host ""
+        Write-Host "  PowerShell 7 が見つかりません。無くても動きますが、" -ForegroundColor Yellow
+        Write-Host "  導入すると機器の調査が数倍速くなります（無料・数分）。" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "    [1] PowerShell 7 を今インストールする (推奨)" -ForegroundColor White
+        Write-Host "    [2] このまま実行する（動作は同じ・時間がかかる）" -ForegroundColor White
+        Write-Host "    [B] 戻る" -ForegroundColor DarkGray
+        Write-Host ""
+        $sel = (Read-Host "  番号を入力してください").Trim().ToUpper()
+        if ($sel -eq '1') {
+            if (Install-Pwsh7) { exit 0 }
+            return
+        }
+        if ($sel -ne '2') { return }
+    }
+
+    $parameters = @{ DetailedScan = $true }
+    if ($LightMode) { $parameters.Light = $true }
+    if ($IncludeInternet) {
+        $parameters.ExternalChecks = $true
+        $parameters.SpeedTest = $true
+        $parameters.SpeedTestMaxMB = 180
+        $parameters.SpeedTestUploadMB = 20
+    }
+    Invoke-MapperWithArgs -ScriptParameters $parameters
+}
+
+function Invoke-OtherMenu {
+    while ($true) {
+        if (-not [Console]::IsInputRedirected) { Clear-Host }
+        Write-Header
+        Show-OtherMenu -LightMode $script:lightMode
+        Write-Host ""
+        $choice = (Read-Host "  番号を入力してください").Trim().ToUpper()
+
+        switch ($choice) {
+            '1' {
+                Invoke-MapperWithArgs -ScriptParameters @{}
+            }
+            '2' {
+                Invoke-LanReport -LightMode $script:lightMode
+            }
+            'V' {
+                Write-Host ""
+                Write-Host "  Cloudflare の測定先へデータを送受信します。" -ForegroundColor Yellow
+                Write-Host "  通信量の上限: 下り 約180MB + 上り 約20MB（合計 約200MB）" -ForegroundColor Yellow
+                $answer = (Read-Host "  速度を測定しますか？ [y/N]").Trim().ToUpper()
+                if ($answer -eq 'Y') {
+                    Invoke-MapperWithArgs -ScriptParameters @{
+                        DiagnoseOnly      = $true
+                        SpeedTest         = $true
+                        SpeedTestMaxMB    = 180
+                        SpeedTestUploadMB = 20
+                    }
+                }
+            }
+            '3' {
+                Write-Host ""
+                $durationInput = Read-Host "  監視する秒数を入力 (空Enterで60秒)"
+                $duration = 60
+                if ($durationInput -match '^\d+$') { $duration = [int]$durationInput }
+                $external = (Read-Host "  インターネット側(8.8.8.8)も監視しますか？ [y/N]").Trim().ToUpper()
+                $parameters = @{ Monitor = $true; MonitorDuration = $duration }
+                if ($external -eq 'Y') { $parameters.ExternalChecks = $true }
+                Invoke-MapperWithArgs -ScriptParameters $parameters
+            }
+            'F' { Invoke-SettingRepair }
+            'S' { Set-ScheduledScan }
+            'P' { Invoke-MapperWithArgs -ScriptParameters @{ PublicReport = $true } }
+            'L' {
+                $script:lightMode = -not $script:lightMode
+                $message = if ($script:lightMode) { "軽量モードを ON にしました" } else { "軽量モードを OFF にしました" }
+                Write-Host ""
+                Write-Host "  $message" -ForegroundColor Green
+                Start-Sleep -Milliseconds 700
+            }
+            'B' { return }
+            '' { }
+            default {
+                Write-Host ""
+                Write-Host "  '$choice' は無効な選択です。1〜3, V, F, S, P, L, B から選んでください" -ForegroundColor Red
+                Start-Sleep -Seconds 1
+            }
+        }
+    }
 }
 
 # ====================================================================
 # メインループ
 # ====================================================================
-$lightMode = $false
+$script:lightMode = $false
 
 while ($true) {
     if (-not [Console]::IsInputRedirected) {
         Clear-Host
     }
     Write-Header
-    Show-Menu -LightMode $lightMode
+    Show-Menu
 
     Write-Host ""
     $choice = Read-Host "  番号を入力してください"
     $choice = $choice.Trim().ToUpper()
 
     switch ($choice) {
-        '1' {
-            Invoke-MapperWithArgs -ScriptParameters @{}
-        }
-        '2' {
-            if ($PSVersionTable.PSVersion.Major -lt 7) {
-                Write-Host ""
-                Write-Host "  PowerShell 7 が見つかりません。無くても動きますが、" -ForegroundColor Yellow
-                Write-Host "  導入すると機器の調査が数倍速くなります（無料・数分）。" -ForegroundColor Yellow
-                Write-Host ""
-                Write-Host "    [1] PowerShell 7 を今インストールする (推奨)" -ForegroundColor White
-                Write-Host "    [2] このまま実行する（動作は同じ・時間がかかる）" -ForegroundColor White
-                Write-Host "    [B] 戻る" -ForegroundColor DarkGray
-                Write-Host ""
-                $sel = (Read-Host "  番号を入力してください").Trim().ToUpper()
-                if ($sel -eq '1') {
-                    if (Install-Pwsh7) { exit 0 }   # 新しい pwsh でメニューが開き直されている
-                    continue
-                }
-                if ($sel -ne '2') { continue }
-            }
-            $p = @{ DetailedScan = $true }
-            if ($lightMode) { $p.Light = $true }
-            Write-Host ""
-            Write-Host "  公開IP・回線情報・メーカー情報も確認する場合は、外部サービスへ通信します。" -ForegroundColor Yellow
-            Write-Host "  通信先と送信内容は docs\NETWORK_SERVICES.md で確認できます。速度測定は含みません。" -ForegroundColor DarkGray
-            $external = (Read-Host "  外部情報も取得しますか？ [y/N]").Trim().ToUpper()
-            if ($external -eq 'Y') { $p.ExternalChecks = $true }
-            Invoke-MapperWithArgs -ScriptParameters $p
-        }
-        'V' {
-            Write-Host ""
-            Write-Host "  Cloudflare の測定先へデータを送受信します。" -ForegroundColor Yellow
-            Write-Host "  通信量の上限: 下り 約180MB + 上り 約20MB（合計 約200MB）" -ForegroundColor Yellow
-            $st = (Read-Host "  速度を測定しますか？ [y/N]").Trim().ToUpper()
-            if ($st -eq 'Y') {
-                Invoke-MapperWithArgs -ScriptParameters @{
-                    DiagnoseOnly     = $true
-                    SpeedTest        = $true
-                    SpeedTestMaxMB   = 180
-                    SpeedTestUploadMB = 20
-                }
-            }
-        }
-        '3' {
-            Write-Host ""
-            $durInput = Read-Host "  監視する秒数を入力 (空Enterで60秒)"
-            $dur = 60
-            if ($durInput -match '^\d+$') { $dur = [int]$durInput }
-            $ext = (Read-Host "  インターネット側(8.8.8.8)も監視しますか？ [y/N]").Trim().ToUpper()
-            $monitorParameters = @{ Monitor = $true; MonitorDuration = $dur }
-            if ($ext -eq 'Y') { $monitorParameters.ExternalChecks = $true }
-            Invoke-MapperWithArgs -ScriptParameters $monitorParameters
-        }
-        'L' {
-            $lightMode = -not $lightMode
-            $msg = if ($lightMode) { "軽量モードを ON にしました" } else { "軽量モードを OFF にしました" }
-            Write-Host ""
-            Write-Host "  $msg" -ForegroundColor Green
-            Start-Sleep -Milliseconds 700
-        }
-        'F' { Invoke-SettingRepair }
-        'S' { Set-ScheduledScan }
+        '1' { Invoke-LanReport -LightMode $script:lightMode -IncludeInternet }
+        '2' { Invoke-OtherMenu }
         'O' { Open-LastResult }
-        'P' { Invoke-MapperWithArgs -ScriptParameters @{ PublicReport = $true } }
         'H' { Open-Help }
         'Q' {
             Write-Host ""
@@ -399,7 +419,7 @@ while ($true) {
         }
         default {
             Write-Host ""
-            Write-Host "  '$choice' は無効な選択です。1〜3, V, F, S, L, O, P, H, Q から選んでください" -ForegroundColor Red
+            Write-Host "  '$choice' は無効な選択です。1, 2, O, H, Q から選んでください" -ForegroundColor Red
             Start-Sleep -Seconds 1
         }
     }

@@ -499,6 +499,29 @@ Describe '安全な既定動作の回帰防止' {
         ($launchers -join "`n") | Should -Not -Match 'Unblock-File'
     }
 
+    It 'トップメニューはフル実行を主操作にして5項目へ絞る' {
+        $startPath = Join-Path $repoRoot 'Start.ps1'
+        $menu = Get-ScriptFunctionSource -Path $startPath -Name 'Show-Menu'
+        ([regex]::Matches($menu, '\[(?:1|2|O|H|Q)\]')).Count | Should -Be 5
+        $menu | Should -Match 'フル実行'
+        $menu | Should -Match 'その他の機能'
+        $menu | Should -Not -Match '\[(?:3|V|F|S|P|L)\]'
+    }
+
+    It 'フル実行は全調査を指定しレポート自動表示を止めない' {
+        $startPath = Join-Path $repoRoot 'Start.ps1'
+        $launcher = Get-Content $startPath -Raw -Encoding UTF8
+        $lanReport = Get-ScriptFunctionSource -Path $startPath -Name 'Invoke-LanReport'
+        $runner = Get-Content (Join-Path $scriptsDir 'Run-NetworkMapper.ps1') -Raw -Encoding UTF8
+
+        $launcher | Should -Match '(?s)''1''\s*\{\s*Invoke-LanReport\s+-LightMode\s+\$script:lightMode\s+-IncludeInternet\s*\}'
+        $lanReport | Should -Match 'DetailedScan\s*=\s*\$true'
+        $lanReport | Should -Match 'ExternalChecks\s*=\s*\$true'
+        $lanReport | Should -Match 'SpeedTest\s*=\s*\$true'
+        $lanReport | Should -Not -Match 'NoOpen'
+        [regex]::IsMatch($runner, 'if\s*\(-not\s+\$NoOpen\)\s*\{\s*try\s*\{\s*Start-Process\s+\$htmlPath', [Text.RegularExpressions.RegexOptions]::Singleline) | Should -BeTrue
+    }
+
     It '通知は文字列コードを生成せず固定ヘルパーへデータとして渡す' {
         $scriptSources = Get-ChildItem -LiteralPath $scriptsDir -Filter '*.ps1' | ForEach-Object {
             Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8
