@@ -1,0 +1,13 @@
+# 改行コード統一ポリシー
+# Windows 用ツールのため、作業ツリーの改行は CRLF に統一する。
+# リポジトリ内部(blob)は LF で正規化して保存し、チェックアウト時に CRLF へ変換する。
+# これにより各自の core.autocrlf 設定に依存せず、どの環境でも同じ改行コードになる。
+
+* text=auto eol=crlf
+
+# 念のためバイナリ拡張子は変換対象外
+*.png  binary
+*.jpg  binary
+*.gif  binary
+*.ico  binary
+*.svg  binary

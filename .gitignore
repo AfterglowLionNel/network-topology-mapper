@@ -1,0 +1,14 @@
+# 実ネットワークの機密情報（MAC/IP/ホスト名/機器名/トポロジ）を含むため除外
+output/
+*.backup.json
+
+# 利用者が付けた機器名（実機器の MAC/IP を含む）。sample のみ追跡する
+config/known-devices.json
+
+# ローカル作業用の退避先
+_private_attic/
+
+# 一時ファイル
+tmp/
+*.tmp
+*.log

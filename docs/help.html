@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>ヘルプ - Network Topology Mapper</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: "Yu Gothic UI", "Meiryo", "Hiragino Sans", sans-serif;
+        background: #f3f4f6; color: #1f2937; line-height: 1.8; font-size: 15px;
+    }
+    .container { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
+    header { margin: 8px 0 20px; }
+    header h1 { font-size: 22px; font-weight: 600; }
+    header p { color: #4b5563; font-size: 13px; }
+    section {
+        background: #ffffff; border: 1px solid #d1d5db; border-radius: 10px;
+        padding: 20px 24px; margin-bottom: 16px;
+    }
+    h2 { font-size: 17px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
+    h3 { font-size: 15px; margin: 14px 0 4px; }
+    p { margin: 6px 0; }
+    ul, ol { margin: 6px 0 6px 22px; }
+    li { margin: 3px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    th { color: #4b5563; font-weight: 600; white-space: nowrap; }
+    code {
+        background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px;
+        padding: 1px 6px; font-family: Consolas, monospace; font-size: 13px;
+    }
+    a { color: #075985; text-underline-offset: 3px; }
+    a:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 3px; }
+    .key {
+        display: inline-block; min-width: 30px; text-align: center;
+        background: #eef2f7; border: 1px solid #9ca3af; border-radius: 5px;
+        padding: 0 7px; font-family: Consolas, monospace; font-weight: 600; font-size: 13px;
+    }
+    .status { display: inline-block; border-radius: 4px; padding: 0 8px; font-size: 12px; font-weight: 600; }
+    .st-pass { background: #ecfdf5; color: #047857; border: 1px solid #6ee7b7; }
+    .st-warn { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
+    .st-fail { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+    .st-skip { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; }
+    .note { color: #4b5563; font-size: 13px; }
+    .warning { border-left: 4px solid #b45309; padding-left: 12px; }
+    footer { color: #6b7280; font-size: 12px; text-align: center; margin-top: 24px; }
+    @media (max-width: 600px) {
+        section { padding: 16px; }
+        table, tbody, tr, th, td { display: block; }
+        th { padding-bottom: 2px; }
+        td { padding-top: 2px; }
+    }
+</style>
+</head>
+<body>
+<main class="container">
+    <header>
+        <h1>Network Topology Mapper ヘルプ</h1>
+        <p>自分が管理するネットワークの構成確認と、不調の切り分けを行うツールです。</p>
+    </header>
+
+    <section>
+        <h2>最初に行うこと</h2>
+        <p>メニューで <span class="key">1</span> の「基本診断」を選んでください。約 10 秒で PC・ネットワークアダプター・ルーターまでを確認します。</p>
+        <p>この基本診断は、LAN 全体の探索、外部サービスへの通信、速度測定を行いません。構成図や HTML レポートが必要な場合は、その後に <span class="key">2</span> の「詳細LAN調査」を選びます。</p>
+    </section>
+
+    <section>
+        <h2>メニューの説明</h2>
+        <table>
+            <tr><th><span class="key">1</span> 基本診断</th><td>PC・NIC・既定ゲートウェイまでをローカル限定で確認します。LAN 全探索と外部通信はありません。</td></tr>
+            <tr><th><span class="key">2</span> 詳細LAN調査</th><td>対象 CIDR と最大台数を表示し、確認後に LAN 内の機器を調べて HTML レポートを作ります。自分が管理する「プライベート」ネットワークだけが対象です。外部情報を取得するかは別に確認します。</td></tr>
+            <tr><th><span class="key">V</span> 速度測定</th><td>Cloudflare へ接続し、下り約 180 MB + 上り約 20 MB、合計約 200 MB を上限に測定します。開始前に確認します。</td></tr>
+            <tr><th><span class="key">3</span> モニタ</th><td>既定ゲートウェイの遅延、損失、ジッター、瞬断を既定 60 秒監視します。インターネット側も監視する場合だけ、別途確認します。</td></tr>
+            <tr><th><span class="key">F</span> 設定の修正</th><td>診断で見つかった PC 側の修復候補を表示します。見るだけ、確認後に適用、直前の変更を元に戻す、の三つから選べます。</td></tr>
+            <tr><th><span class="key">S</span> 定期実行</th><td>基本診断または基本診断 + モニタを毎日実行する Windows タスクを登録、確認、解除します。</td></tr>
+            <tr><th><span class="key">O</span> 前回の結果</th><td>最後に生成した通常レポート <code>output\diagram.html</code> を開きます。</td></tr>
+            <tr><th><span class="key">P</span> 公開用</th><td>識別情報を仮名へ置換した別のレポートを生成します。公開前の目視確認は必要です。</td></tr>
+            <tr><th><span class="key">H</span> ヘルプ</th><td>このページを開きます。</td></tr>
+            <tr><th><span class="key">L</span> 軽量モード</th><td>詳細調査で時間のかかる一部の機器特定を省きます。</td></tr>
+        </table>
+    </section>
+
+    <section>
+        <h2>詳細調査の確認画面</h2>
+        <p>詳細調査では、実行前に対象 NIC、CIDR、最大ホスト数、外部通信の有無を表示します。内容が自分または組織から許可された範囲と一致するときだけ <code>y</code> を入力してください。Enter だけなら開始しません。</p>
+        <p class="warning"><strong>職場、学校、宿泊施設、公衆 Wi-Fi、他人のネットワークを無断で調査しないでください。</strong></p>
+        <p class="note">VPN、仮想 NIC、Bluetooth、コンテナ、「パブリック」プロファイル、広すぎるネットワークは自動的に対象外です。</p>
+    </section>
+
+    <section>
+        <h2>結果の見方</h2>
+        <table>
+            <tr><th><span class="status st-pass">pass</span></th><td>測定した範囲では問題なし。</td></tr>
+            <tr><th><span class="status st-warn">warn</span></th><td>改善の余地または注意点があります。</td></tr>
+            <tr><th><span class="status st-fail">fail</span></th><td>通信を妨げる問題が疑われます。</td></tr>
+            <tr><th><span class="status st-skip">skip</span></th><td>前提がそろわず測定していません。</td></tr>
+        </table>
+        <h3>最初に読む場所</h3>
+        <p>「診断」タブの推定原因と根拠を確認します。判定は測定時点の推定なので、ケーブル交換や設定変更の後は再測定してください。</p>
+        <h3>AI修正依頼</h3>
+        <p>改善点がある場合、すべての問題、根拠、取得できた実際の数値を一つのプロンプトにまとめます。「AI修正依頼」タブのボタンでコピーでき、同じ内容を <code>output\ai-repair-prompt.txt</code> にも保存します。</p>
+        <p>プロンプトは、複数の問題を分割せずまとめて直し、再測定するよう AI に依頼します。管理者権限、通信断、ルーター変更、課金、不可逆操作が必要な場合は、先に利用者へ確認する指示も含みます。</p>
+    </section>
+
+    <section>
+        <h2>通信量とプライバシー</h2>
+        <ul>
+            <li>基本診断は外部サービスへ通信しません。</li>
+            <li>詳細 LAN 調査の外部情報、インターネット側モニタ、速度測定は、それぞれ明示的に選んだ場合だけ有効です。</li>
+            <li>外部サービスへ接続すると、提供者には接続元の公開 IP、時刻、User-Agent など通常の通信情報が見えます。</li>
+            <li>速度測定では生成した測定用バイト列を Cloudflare へ送信します。診断結果や端末一覧は送信しません。</li>
+            <li>通常の結果はこの PC の <code>output</code> に保存されます。IP、MAC、SSID、端末名などを含むため秘密情報として扱ってください。</li>
+        </ul>
+        <p><a href="../PRIVACY.md">プライバシーの詳細</a> / <a href="../NETWORK_SERVICES.md">外部通信先の一覧</a></p>
+    </section>
+
+    <section>
+        <h2>公開用レポート</h2>
+        <p><span class="key">P</span> は IP、MAC、PC 名、ユーザー名、SSID、端末名などを仮名へ置換し、履歴、プロセス、接続先、外部回線情報などを除外した別ファイルを作ります。</p>
+        <p class="warning"><strong>仮名化は匿名化の保証ではありません。</strong>端末数、珍しい構成、時刻、測定値などから環境を推測できる場合があります。HTML、CSV、AIプロンプトを公開する前に必ず目視確認してください。</p>
+    </section>
+
+    <section>
+        <h2>困ったとき</h2>
+        <h3>詳細調査を開始できない</h3>
+        <p>信頼できる自宅 LAN が Windows で「プライベート」に設定されているか確認してください。「パブリック」のまま詳細調査を許可する回避策は用意していません。</p>
+        <h3>構成図だけ表示されない</h3>
+        <p>初回の Mermaid がまだない可能性があります。許可できる環境なら、詳細調査で外部情報の取得に <code>y</code> と答えてください。固定版を取得し、SHA-256 が一致した場合だけ使います。診断表と AI 修正依頼は Mermaid がなくても読めます。</p>
+        <h3>端末が見つからない</h3>
+        <p>スリープ、Wi-Fi のクライアント分離、ファイアウォール、ランダム MAC などにより応答しない端末があります。表示は全端末の存在を保証しません。</p>
+        <h3>修復を元に戻したい</h3>
+        <p><span class="key">F</span> → <span class="key">3</span> を選びます。AI の提案を別に実行した変更は、このロールバックの対象外です。</p>
+        <p>CLI を含む詳しい手順は <a href="README.md">docs/README.md</a> にあります。</p>
+    </section>
+
+    <footer>Network Topology Mapper</footer>
+</main>
+</body>
+</html>

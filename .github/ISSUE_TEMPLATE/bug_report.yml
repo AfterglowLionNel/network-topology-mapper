@@ -1,0 +1,73 @@
+name: バグ報告
+description: 再現できる不具合を報告します
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        報告ありがとうございます。
+
+        通常レポートや実ネットワークの情報は添付しないでください。セキュリティ上の問題は公開Issueではなく、SECURITY.mdの窓口へお願いします。
+
+  - type: input
+    id: version
+    attributes:
+      label: バージョンまたはコミット
+      description: 使用したRelease名またはコミットSHAを記入してください。
+      placeholder: v1.0.0 または abc1234
+    validations:
+      required: true
+
+  - type: dropdown
+    id: powershell
+    attributes:
+      label: PowerShell
+      options:
+        - PowerShell 7
+        - Windows PowerShell 5.1
+        - 不明
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 起きたこと
+      description: 個人情報・実ネットワーク情報を除いて説明してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 再現手順
+      description: 外部通信やLAN調査を行った場合は、どのオプションを選んだかも記入してください。
+      placeholder: |
+        1. Start.batを起動
+        2. [1] 基本診断を選択
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待した動作
+    validations:
+      required: true
+
+  - type: textarea
+    id: sanitized
+    attributes:
+      label: 補足情報（任意）
+      description: 必要な場合だけ、実ネットワークの情報を除いて記入してください。
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 公開情報の確認
+      options:
+        - label: 実ネットワークの情報や資格情報を含めていません。
+          required: true
