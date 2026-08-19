@@ -6,10 +6,16 @@
     引数なしでは PC・NIC・既定ゲートウェイまでの基本診断だけを行う。
     LAN 内への能動プローブは -DetailedScan、外部サービスへの通信は
     -ExternalChecks または -SpeedTest を明示した場合だけ行う。
+    メニューのフル実行では -IncludeMonitor も指定され、遅延・損失・瞬断を
+    連続測定して統合レポートの「モニタ」へ反映する。
 
 .PARAMETER AllowPublicProfile
     Windows のネットワーク種別が「パブリック」の物理 LAN も確認候補に含める。
     対象 CIDR を表示し、既定 N の確認を通過した場合だけ調査する。
+
+.PARAMETER IncludeMonitor
+    詳細 LAN 調査の途中で通信品質を連続監視し、統合レポートへ含める。
+    メニューのフル実行では有効。監視時間は -MonitorDuration で指定する。
 
 .EXAMPLE
     .\Run-NetworkMapper.ps1
@@ -44,9 +50,14 @@ param(
     [Parameter(ParameterSetName = 'Public')]
     [switch]$PublicReport,
 
+    [Parameter(ParameterSetName = 'Detailed')]
     [Parameter(ParameterSetName = 'Monitor')]
     [ValidateRange(5, 86400)]
     [int]$MonitorDuration = 60,
+
+    # 詳細調査の一部として連続監視も行い、統合レポートへ含める。
+    [Parameter(ParameterSetName = 'Detailed')]
+    [switch]$IncludeMonitor,
 
     [Parameter(ParameterSetName = 'Detailed')]
     [switch]$Light,
@@ -217,6 +228,8 @@ function Confirm-ActiveScan {
         [array]$Targets,
         [bool]$AllowExternal,
         [bool]$IncludeSpeedTest,
+        [bool]$IncludeMonitor,
+        [int]$MonitorSeconds,
         [int]$DownloadMB,
         [int]$UploadMB,
         [switch]$Approved
@@ -237,6 +250,10 @@ function Confirm-ActiveScan {
     }
     if ($IncludeSpeedTest) {
         Write-Host "  速度測定: Cloudflare へ最大 約 $($DownloadMB + $UploadMB) MB（下り $DownloadMB / 上り $UploadMB MB）" -ForegroundColor Yellow
+    }
+    if ($IncludeMonitor) {
+        $monitorTarget = if ($AllowExternal) { '既定ゲートウェイ + インターネット側' } else { '既定ゲートウェイ' }
+        Write-Host "  通信品質モニタ: $monitorTarget を $MonitorSeconds 秒間、1 秒間隔で監視" -ForegroundColor DarkGray
     }
     if (@($Targets | Where-Object { $_.profile -eq 'Public' }).Count -gt 0) {
         Write-Host '  注意: Windows で「パブリック」に設定された LAN が含まれます。' -ForegroundColor Yellow
@@ -358,6 +375,7 @@ if ($totalHosts -gt $MaxScanHosts) {
     throw "調査候補が合計 $totalHosts 台で上限 $MaxScanHosts 台を超えます。-ScanInterfaceIndex で自分が管理する NIC を1つ選んでください。"
 }
 if (-not (Confirm-ActiveScan -Targets $scanTargets -AllowExternal $allowExternal -IncludeSpeedTest ([bool]$SpeedTest) `
+            -IncludeMonitor ([bool]$IncludeMonitor) -MonitorSeconds $MonitorDuration `
             -DownloadMB $SpeedTestMaxMB -UploadMB $SpeedTestUploadMB -Approved:$ApproveActiveScan)) {
     Write-Host '調査をキャンセルしました。設定変更や通信は行っていません。' -ForegroundColor Yellow
     return
@@ -369,7 +387,9 @@ if ($psMajor -lt 7) {
 }
 
 $doInternetInfo = $allowExternal -and -not $SkipInternetInfo
-$totalSteps = if ($doInternetInfo) { 5 } else { 4 }
+$totalSteps = 4
+if ($IncludeMonitor) { $totalSteps++ }
+if ($doInternetInfo) { $totalSteps++ }
 $stepNum = 1
 
 Write-Host "`n===================================" -ForegroundColor Magenta
@@ -377,6 +397,19 @@ Write-Host " Step $stepNum/$totalSteps : ネットワーク診断" -ForegroundCo
 Write-Host '===================================' -ForegroundColor Magenta
 & $diagnoseScript @diagArgs
 $stepNum++
+
+if ($IncludeMonitor) {
+    Write-Host "`n===================================" -ForegroundColor Magenta
+    Write-Host " Step $stepNum/$totalSteps : 通信品質モニタ（$MonitorDuration 秒）" -ForegroundColor Magenta
+    Write-Host '===================================' -ForegroundColor Magenta
+    $monitorArgs = @{
+        DurationSec        = $MonitorDuration
+        NoOpen             = $true
+        NoExternalServices = [bool](-not $allowExternal)
+    }
+    & $monitorScript @monitorArgs
+    $stepNum++
+}
 
 Write-Host "`n===================================" -ForegroundColor Magenta
 Write-Host " Step $stepNum/$totalSteps : ネットワーク情報収集" -ForegroundColor Magenta

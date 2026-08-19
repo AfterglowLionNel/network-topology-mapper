@@ -42,13 +42,13 @@ git clone https://github.com/AfterglowLionNel/network-topology-mapper.git
 
 | キー | 内容 |
 |---|---|
-| `1` | 診断、速度測定、LAN 調査、機器特定、HTML レポート生成を一括実行 |
+| `1` | 診断、速度測定、60秒の通信品質モニタ、LAN 調査、機器特定、HTML レポート生成を一括実行 |
 | `2` | 基本診断、外部通信なしの LAN レポート、モニタ、修復などを開く |
 | `O` | 前回の通常レポートを開く |
 | `H` | ローカルのヘルプを開く |
 | `Q` | 終了 |
 
-フル実行では、対象 CIDR、最大ホスト数、外部通信、Cloudflare 速度測定の上限（下り約 180 MB + 上り約 20 MB）を開始前にまとめて表示します。
+フル実行では、対象 CIDR、最大ホスト数、外部通信、Cloudflare 速度測定の上限（下り約 180 MB + 上り約 20 MB）、通信品質の監視時間（60秒）を開始前にまとめて表示します。レポートの「モニタ」では、遅延・損失・ジッター・瞬断に加え、下りと上りの実効速度をグラフと実測表で確認できます。
 
 詳しい使い方は [docs/README.md](docs/README.md) にあります。
 
@@ -77,6 +77,9 @@ pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DiagnoseOnly -SpeedTest
 
 # 5 分間モニタし、ブラウザは開かない
 pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -Monitor -MonitorDuration 300 -NoOpen
+
+# 詳細LAN調査に60秒モニタも含め、レポートは開かない
+pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DetailedScan -ExternalChecks -SpeedTest -IncludeMonitor -MonitorDuration 60 -NoOpen
 
 # 既存の詳細調査結果から公開用レポートを生成
 pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -PublicReport -NoOpen

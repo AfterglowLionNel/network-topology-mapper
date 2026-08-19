@@ -529,7 +529,7 @@ Describe '安全な既定動作の回帰防止' {
         $menu | Should -Not -Match '\[(?:3|V|F|S|P|L)\]'
     }
 
-    It 'フル実行は全調査を指定しレポート自動表示を止めない' {
+    It 'フル実行は診断・速度・通信品質・LAN調査を指定しレポート自動表示を止めない' {
         $startPath = Join-Path $repoRoot 'Start.ps1'
         $launcher = Get-Content $startPath -Raw -Encoding UTF8
         $lanReport = Get-ScriptFunctionSource -Path $startPath -Name 'Invoke-LanReport'
@@ -540,8 +540,28 @@ Describe '安全な既定動作の回帰防止' {
         $lanReport | Should -Match 'AllowPublicProfile\s*=\s*\$true'
         $lanReport | Should -Match 'ExternalChecks\s*=\s*\$true'
         $lanReport | Should -Match 'SpeedTest\s*=\s*\$true'
+        $lanReport | Should -Match 'IncludeMonitor\s*=\s*\$true'
+        $lanReport | Should -Match 'MonitorDuration\s*=\s*60'
         $lanReport | Should -Not -Match 'NoOpen'
+        $runner | Should -Match '&\s*\$diagnoseScript\s+@diagArgs'
+        [regex]::IsMatch($runner, 'if\s*\(\$IncludeMonitor\).*?&\s*\$monitorScript\s+@monitorArgs', [Text.RegularExpressions.RegexOptions]::Singleline) | Should -BeTrue
+        $runner | Should -Match '&\s*\$collectScript\s+@collectArgs'
+        $runner | Should -Match '&\s*\$identifyScript\s+@identifyArgs'
+        $runner | Should -Match '&\s*\$internetScript\s+@internetArgs'
+        $runner | Should -Match '&\s*\$diagramScript\s+@diagramArgs'
         [regex]::IsMatch($runner, 'if\s*\(-not\s+\$NoOpen\)\s*\{\s*try\s*\{\s*Start-Process\s+\$htmlPath', [Text.RegularExpressions.RegexOptions]::Singleline) | Should -BeTrue
+    }
+
+    It '統合レポートのモニタには品質グラフと下り・上り速度を表示する' {
+        $report = Get-Content (Join-Path $scriptsDir 'New-NetworkDiagram.ps1') -Raw -Encoding UTF8
+
+        $report | Should -Match '<h2>遅延・瞬断モニタ</h2>'
+        $report | Should -Match '<h2>通信速度</h2>'
+        $report | Should -Match "key\s*=\s*'downloadMbps'"
+        $report | Should -Match "key\s*=\s*'uploadMbps'"
+        $report | Should -Match '通信速度の実測値を表で見る'
+        $report | Should -Match 'まだ測定値がありません。メニューの「フル実行」'
+        $report | Should -Match 'aria-label=.*遅延・損失グラフ'
     }
 
     It '通知は文字列コードを生成せず固定ヘルパーへデータとして渡す' {

@@ -6,7 +6,7 @@
 
 | 通信先 | 用途 | 送られる主な情報 | 有効になる条件 |
 |---|---|---|---|
-| Cloudflare / Google の公開 DNS IP（IPv4 / IPv6） | インターネット側の ping、MTU、traceroute | 接続元 IP と ICMP | 外部確認または外部モニタを選択 |
+| Cloudflare / Google の公開 DNS IP（IPv4 / IPv6） | インターネット側の ping、MTU、traceroute | 接続元 IP と ICMP | フル実行、外部確認、または外部モニタを選択 |
 | 設定済み DNS リゾルバー | Google、Cloudflare、YouTube 等の名前解決時間 | 問い合わせ名 | 外部確認を選択 |
 | Google、GitHub、YouTube | TCP 443 / HTTPS 到達性 | 接続元 IP、TLS/HTTP メタデータ | 外部確認を選択 |
 | Google、Yahoo! JAPAN | TCP、TLS、HTTP 応答時間 | 接続元 IP、Host、User-Agent | 外部確認を選択 |

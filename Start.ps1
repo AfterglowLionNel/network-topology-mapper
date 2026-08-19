@@ -35,7 +35,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "    [1] " -NoNewline -ForegroundColor Cyan
     Write-Host "フル実行" -ForegroundColor Green -NoNewline
-    Write-Host " (推奨)              診断・速度測定・LAN構成図・機器特定" -ForegroundColor DarkGray
+    Write-Host " (推奨)              診断・速度・通信品質・LAN構成図・機器特定" -ForegroundColor DarkGray
     Write-Host "                                  完了後にHTMLレポートを自動で開く" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "    [2] " -NoNewline -ForegroundColor Cyan
@@ -326,6 +326,8 @@ function Invoke-LanReport {
         $parameters.SpeedTest = $true
         $parameters.SpeedTestMaxMB = 180
         $parameters.SpeedTestUploadMB = 20
+        $parameters.IncludeMonitor = $true
+        $parameters.MonitorDuration = 60
     }
     Invoke-MapperWithArgs -ScriptParameters $parameters
 }

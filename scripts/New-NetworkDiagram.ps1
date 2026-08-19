@@ -1905,39 +1905,58 @@ function New-TrendSvg {
     param(
         [array]$Points,          # @{ index; value } の配列（index は 0..N-1 の等間隔）
         [int]$Count,
-        [string]$Color = '#2563eb'
+        [string]$Color = '#2563eb',
+        [string]$Title = '測定値の推移',
+        [Nullable[double]]$MinValue = $null,
+        [Nullable[double]]$MaxValue = $null
     )
     $w = 280; $h = 60; $padX = 4; $padY = 8
-    if ($Points.Count -lt 2) { return "" }
+    if ($Points.Count -lt 1) { return "" }
     $vals = @($Points | ForEach-Object { [double]$_.value })
-    $min = ($vals | Measure-Object -Minimum).Minimum
-    $max = ($vals | Measure-Object -Maximum).Maximum
+    $min = if ($null -ne $MinValue) { [double]$MinValue } else { [double](($vals | Measure-Object -Minimum).Minimum) }
+    $max = if ($null -ne $MaxValue) { [double]$MaxValue } else { [double](($vals | Measure-Object -Maximum).Maximum) }
     $span = $max - $min
     if ($span -le 0) { $span = if ([math]::Abs($max) -gt 0) { [math]::Abs($max) * 0.2 } else { 1 } }
     $denomX = if ($Count -gt 1) { $Count - 1 } else { 1 }
 
     $coords = @()
+    $lastX = $w / 2
+    $lastY = $h / 2
     foreach ($p in $Points) {
-        $x = $padX + ($w - 2 * $padX) * ([double]$p.index / $denomX)
+        $x = if ($Count -gt 1) {
+            $padX + ($w - 2 * $padX) * ([double]$p.index / $denomX)
+        } else {
+            $w / 2
+        }
         $y = $padY + ($h - 2 * $padY) * (1 - (([double]$p.value - $min) / $span))
-        $coords += "{0:0.#},{1:0.#}" -f $x, $y
+        $xText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, '{0:0.#}', $x)
+        $yText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, '{0:0.#}', $y)
+        $coords += "$xText,$yText"
+        $lastX = $x
+        $lastY = $y
     }
-    $lastX = ($coords[-1] -split ',')[0]
-    $lastY = ($coords[-1] -split ',')[1]
     $polyline = $coords -join ' '
+    $line = if ($coords.Count -ge 2) {
+        "<polyline points='$polyline' fill='none' stroke='$Color' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/>"
+    } else { '' }
+    $titleHtml = [System.Web.HttpUtility]::HtmlEncode($Title)
+    $lastXText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, '{0:0.#}', $lastX)
+    $lastYText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, '{0:0.#}', $lastY)
     return @"
-<svg viewBox="0 0 $w $h" style="width:100%;height:60px;display:block" preserveAspectRatio="none" role="img">
-  <polyline points="$polyline" fill="none" stroke="$Color" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-  <circle cx="$lastX" cy="$lastY" r="2.6" fill="$Color"/>
+<svg viewBox="0 0 $w $h" style="width:100%;height:60px;display:block" preserveAspectRatio="none" role="img" aria-label="$titleHtml">
+  <title>$titleHtml</title>
+  $line
+  <circle cx="$lastXText" cy="$lastYText" r="2.8" fill="$Color"/>
 </svg>
 "@
 }
 
 $trendSection = ""
+$speedMonitorSection = ""
 try {
     $histDirT = Join-Path $OutputDir "history"
     $healthFiles = @(Get-ChildItem -Path $histDirT -Filter "health-*.json" -ErrorAction SilentlyContinue | Sort-Object Name)
-    if ($healthFiles.Count -ge 2) {
+    if (-not $NoHistory -and $healthFiles.Count -ge 1) {
         # 接続先が違えば遅延も電波も別物なので、同じネットワークの記録だけを並べる。
         # ネットワーク識別子を持たない旧形式の記録は、判別できないので使わない。
         $snapsAll = @()
@@ -1953,6 +1972,7 @@ try {
             @{ key = 'gwLossPct';     label = 'ゲートウェイ損失';   unit = '%';    lowerBetter = $true;  color = '#dc2626'; decimals = 1 }
             @{ key = 'wifiSignalPct'; label = 'Wi-Fi 電波強度';     unit = '%';    lowerBetter = $false; color = '#059669'; decimals = 0 }
             @{ key = 'downloadMbps';  label = '実効下り速度';       unit = 'Mbps'; lowerBetter = $false; color = '#b45309'; decimals = 1 }
+            @{ key = 'uploadMbps';    label = '実効上り速度';       unit = 'Mbps'; lowerBetter = $false; color = '#1d4ed8'; decimals = 1 }
             @{ key = 'bloatMs';       label = '負荷時の遅延増加';   unit = 'ms';   lowerBetter = $true;  color = '#c2410c'; decimals = 1 }
             @{ key = 'nicDiscDeltaPpm'; label = 'NIC受信破棄率(診断中)'; unit = 'ppm'; lowerBetter = $true; color = '#92400e'; decimals = 1 }
             @{ key = 'lanReadMbps';   label = '宅内LAN読み取り速度'; unit = 'Mbps'; lowerBetter = $false; color = '#4d7c0f'; decimals = 1 }
@@ -1988,7 +2008,7 @@ try {
             $fmt = "{0:N$($def.decimals)}"
             $minV = ($values | Measure-Object -Minimum).Minimum
             $maxV = ($values | Measure-Object -Maximum).Maximum
-            $svg = New-TrendSvg -Points $pts -Count $snaps.Count -Color $def.color
+            $svg = New-TrendSvg -Points $pts -Count $snaps.Count -Color $def.color -Title "$($def.label)の推移"
             $cards += @"
             <div class="trend-card">
                 <div class="trend-head">
@@ -2016,6 +2036,84 @@ try {
         <div class="trend-grid">
 $cards
         </div>
+    </section>
+"@
+        }
+
+        # 速度は診断結果にも残しつつ、見たい値をまとめて確認できるよう
+        # 「モニタ」に現在値・履歴グラフ・実測表を追加する。
+        $speedSnaps = @($snaps | Where-Object {
+            ($null -ne $_.downloadMbps -and "$($_.downloadMbps)" -ne '') -or
+            ($null -ne $_.uploadMbps -and "$($_.uploadMbps)" -ne '')
+        })
+        if ($speedSnaps.Count -gt 0) {
+            $speedValues = @()
+            foreach ($s in $speedSnaps) {
+                if ($null -ne $s.downloadMbps -and "$($s.downloadMbps)" -ne '') { $speedValues += [double]$s.downloadMbps }
+                if ($null -ne $s.uploadMbps -and "$($s.uploadMbps)" -ne '') { $speedValues += [double]$s.uploadMbps }
+            }
+            $speedScaleMax = [double](($speedValues | Measure-Object -Maximum).Maximum)
+            if ($speedScaleMax -le 0) { $speedScaleMax = 1 }
+
+            $speedCards = ""
+            $speedDefs = @(
+                @{ key = 'downloadMbps'; label = '下り'; color = '#1d4ed8' }
+                @{ key = 'uploadMbps';   label = '上り'; color = '#b45309' }
+            )
+            foreach ($def in $speedDefs) {
+                $pts = @()
+                for ($i = 0; $i -lt $speedSnaps.Count; $i++) {
+                    $v = $speedSnaps[$i].($def.key)
+                    if ($null -ne $v -and "$v" -ne '') { $pts += @{ index = $i; value = [double]$v } }
+                }
+                if ($pts.Count -eq 0) { continue }
+                $values = @($pts | ForEach-Object { [double]$_.value })
+                $latest = [double]$values[-1]
+                $minV = [double](($values | Measure-Object -Minimum).Minimum)
+                $maxV = [double](($values | Measure-Object -Maximum).Maximum)
+                $barPct = [math]::Round([math]::Min(100, 100 * $latest / $speedScaleMax), 1)
+                $barPctText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, '{0:0.#}', $barPct)
+                $svg = New-TrendSvg -Points $pts -Count $speedSnaps.Count -Color $def.color `
+                    -Title "$($def.label)速度の推移。最新 $latest Mbps" -MinValue 0 -MaxValue $speedScaleMax
+                $speedCards += @"
+            <div class="speed-card">
+                <div class="speed-card-head"><span>$($def.label)</span><strong>$('{0:N1}' -f $latest)<small> Mbps</small></strong></div>
+                <div class="speed-bar" aria-hidden="true"><span style="width:${barPctText}%;background:$($def.color)"></span></div>
+                $svg
+                <div class="trend-range">最小 $('{0:N1}' -f $minV) / 最大 $('{0:N1}' -f $maxV) ・ $($pts.Count) 回分</div>
+            </div>
+"@
+            }
+
+            $speedRows = ""
+            foreach ($s in @($speedSnaps | Select-Object -Last 12 | Sort-Object timestamp -Descending)) {
+                $timeText = [string]$s.timestamp
+                try { $timeText = ([DateTimeOffset]::Parse($timeText)).ToString('yyyy-MM-dd HH:mm:ss') } catch { }
+                $downText = if ($null -ne $s.downloadMbps -and "$($s.downloadMbps)" -ne '') { '{0:N1}' -f [double]$s.downloadMbps } else { '未測定' }
+                $upText = if ($null -ne $s.uploadMbps -and "$($s.uploadMbps)" -ne '') { '{0:N1}' -f [double]$s.uploadMbps } else { '未測定' }
+                $speedRows += "<tr><td>$([System.Web.HttpUtility]::HtmlEncode($timeText))</td><td>$downText Mbps</td><td>$upText Mbps</td></tr>`n"
+            }
+            $speedHistoryNote = if ($speedSnaps.Count -eq 1) {
+                '今回は1回分です。次回以降のフル実行結果が同じグラフへ追加されます。'
+            } else {
+                "同じネットワークで測った直近 $($speedSnaps.Count) 回分です。"
+            }
+            $speedMonitorSection = @"
+    <section>
+        <h2>通信速度</h2>
+        <p class="section-note">
+            Cloudflare の測定先との実効速度です。$([System.Web.HttpUtility]::HtmlEncode($speedHistoryNote))
+            下りと上りは同じ 0〜$('{0:N1}' -f $speedScaleMax) Mbps の目盛りで描いています。
+        </p>
+        <div class="speed-grid">
+$speedCards
+        </div>
+        <details class="monitor-data">
+            <summary>通信速度の実測値を表で見る</summary>
+            <div class="table-scroll">
+                <table><thead><tr><th>測定日時</th><th>下り</th><th>上り</th></tr></thead><tbody>$speedRows</tbody></table>
+            </div>
+        </details>
     </section>
 "@
         }
@@ -2119,7 +2217,8 @@ if (Test-Path $monitorPath) {
                 最小 $($ts.minMs) / 中央値 $($ts.medianMs) / 平均 $($ts.avgMs) / 最大 $($ts.maxMs) ms ・
                 ジッタ $($ts.jitterMs) ms ・ スパイク $($ts.spikeCount) 件 ・ 瞬断 $($ts.outageCount) 回
             </div>
-            <svg viewBox="0 0 $chartW $chartH" style="width:100%;height:auto;background:#fafafa;border:1px solid #e5e7eb;border-radius:8px">
+            <svg viewBox="0 0 $chartW $chartH" style="width:100%;height:auto;background:#fafafa;border:1px solid #e5e7eb;border-radius:8px" role="img" aria-label="$([System.Web.HttpUtility]::HtmlEncode([string]$ts.label)) の遅延・損失グラフ">
+                <title>$([System.Web.HttpUtility]::HtmlEncode([string]$ts.label)) の遅延・損失グラフ</title>
                 <text x="6" y="$($padT + 6)" font-size="11" fill="#6b7280">$yMax ms</text>
                 <text x="6" y="$($padT + $plotH)" font-size="11" fill="#6b7280">0</text>
                 $medLine
@@ -2146,6 +2245,16 @@ $charts
     } catch {
         Write-Host "[!] モニタ結果の取り込みに失敗: $($_.Exception.Message)" -ForegroundColor Yellow
     }
+}
+
+$monitorSection = ($monitorSection + "`n" + $speedMonitorSection).Trim()
+if (-not $PublicReport -and [string]::IsNullOrWhiteSpace($monitorSection)) {
+    $monitorSection = @"
+    <section>
+        <h2>通信品質・速度モニタ</h2>
+        <p class="section-note">まだ測定値がありません。メニューの「フル実行」で、遅延・損失・瞬断と通信速度をまとめて測定できます。</p>
+    </section>
+"@
 }
 
 # ==========================================
@@ -3115,6 +3224,33 @@ $mermaidScriptTag
     }
     .trend-unit { font-size: 12px; font-weight: 400; color: #6b7280; margin-left: 3px; }
     .trend-range { font-size: 11px; color: #6b7280; margin-top: 4px; }
+    .section-note { font-size: 13px; color: #4b5563; margin-top: 0; }
+    .speed-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+    }
+    .speed-card {
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 14px;
+        background: #fff;
+    }
+    .speed-card-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        color: #374151;
+        font-size: 14px;
+    }
+    .speed-card-head strong { color: #111827; font-size: 24px; }
+    .speed-card-head small { color: #6b7280; font-size: 12px; font-weight: 400; }
+    .speed-bar { height: 6px; margin: 8px 0 5px; background: #e5e7eb; overflow: hidden; }
+    .speed-bar span { display: block; height: 100%; min-width: 2px; }
+    .monitor-data { margin-top: 16px; }
+    .monitor-data summary { color: #374151; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .table-scroll { margin-top: 8px; overflow-x: auto; }
 
     .alert-banner {
         background: white;

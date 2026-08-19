@@ -18,11 +18,12 @@ PowerShell 7 の方が詳細 LAN 調査は高速です。導入案内を選ん�
 
 - PC、ネットワーク、DNS、HTTPS の診断
 - Cloudflare を使った速度測定
+- 既定ゲートウェイとインターネット側の60秒間の通信品質モニタ
 - LAN 内の機器調査と機器特定
 - 公開 IP、回線、メーカー情報の取得
 - 構成図、診断、AI修正依頼を含む `output/diagram.html` の生成
 
-開始前に対象 NIC、CIDR、最大ホスト数、外部通信、速度測定の通信量をまとめて表示します。内容を確認して `y` を入力した場合だけ開始し、完了後は HTML レポートを既定ブラウザで自動的に開きます。
+開始前に対象 NIC、CIDR、最大ホスト数、外部通信、速度測定の通信量、通信品質の監視時間をまとめて表示します。内容を確認して `y` を入力した場合だけ開始し、完了後は HTML レポートを既定ブラウザで自動的に開きます。
 
 調査対象は物理 NIC の RFC 1918 IPv4 `/22`〜`/30` に限定されます。Windows のネットワーク種別が「パブリック」の場合は警告を表示するため、自分が管理する LAN だと確認できる場合だけ続けてください。速度測定は下り約 180 MB、上り約 20 MB、合計約 200 MB が上限です。
 
@@ -55,12 +56,14 @@ PowerShell 7 の方が詳細 LAN 調査は高速です。導入案内を選ん�
 
 通常レポートには次のタブがあります。
 
-- 概要: 主要な結果と要確認事項
 - 構成図: LAN のトポロジ
 - 診断: 各検査、推定原因、履歴
 - AI修正依頼: すべての問題と実測値をまとめた AI 向けプロンプト
 - 機器: 発見した端末と識別根拠
-- 接続 / 経路など: 取得できた範囲の補足情報
+- 通信・回線: 回線情報、現在の通信量、接続先、経路、アダプタ
+- モニタ: 遅延、損失、ジッター、瞬断のグラフと、下り・上り速度の現在値・履歴・実測表
+
+フル実行では「モニタ」まで自動測定します。速度は診断の根拠としても残し、見比べやすい表示をモニタ側にも追加しています。履歴グラフは同じネットワークでの実行結果だけを使い、初回は現在値、2回目以降は推移も表示します。
 
 AI修正依頼は読み取り専用欄に表示され、「コピー」ボタンで一括コピーできます。Clipboard API が使えないローカルファイル環境では、選択と `document.execCommand('copy')` にフォールバックします。コピー結果は画面上のステータスでも通知します。
 
@@ -103,6 +106,9 @@ pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DiagnoseOnly -SpeedTest -
 
 # 5 分間のローカルモニタ
 pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -Monitor -MonitorDuration 300 -NoOpen
+
+# 詳細LAN調査に60秒モニタも含める
+pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DetailedScan -ExternalChecks -SpeedTest -IncludeMonitor -MonitorDuration 60 -NoOpen
 
 # 公開用ファイルを作り、自動では開かない
 pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -PublicReport -NoOpen
