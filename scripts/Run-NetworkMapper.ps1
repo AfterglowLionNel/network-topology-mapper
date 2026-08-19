@@ -7,6 +7,10 @@
     LAN 内への能動プローブは -DetailedScan、外部サービスへの通信は
     -ExternalChecks または -SpeedTest を明示した場合だけ行う。
 
+.PARAMETER AllowPublicProfile
+    Windows のネットワーク種別が「パブリック」の物理 LAN も確認候補に含める。
+    対象 CIDR を表示し、既定 N の確認を通過した場合だけ調査する。
+
 .EXAMPLE
     .\Run-NetworkMapper.ps1
     外部通信や LAN 全探索をしない基本診断。
@@ -50,6 +54,11 @@ param(
     # 非対話の自動化で、表示済みの LAN 能動調査を承認する。
     [Parameter(ParameterSetName = 'Detailed')]
     [switch]$ApproveActiveScan,
+
+    # Windows のネットワーク種別が Public でも、物理 NIC・RFC1918・対象数制限を満たす
+    # LAN を確認画面へ出す。実際の調査は既定 N の確認後だけ開始する。
+    [Parameter(ParameterSetName = 'Detailed')]
+    [switch]$AllowPublicProfile,
 
     # 複数の安全な NIC がある場合に対象を絞る。
     [Parameter(ParameterSetName = 'Detailed')]
@@ -166,7 +175,10 @@ function Test-DisallowedAdapterName {
 }
 
 function Get-SafeScanTargets {
-    param([int[]]$RequestedInterfaceIndex)
+    param(
+        [int[]]$RequestedInterfaceIndex,
+        [switch]$AllowPublicProfile
+    )
 
     $profiles = @{}
     foreach ($profile in @(Get-NetConnectionProfile -ErrorAction SilentlyContinue)) {
@@ -180,7 +192,8 @@ function Get-SafeScanTargets {
         $hardwareProperty = $adapter.PSObject.Properties['HardwareInterface']
         if ($hardwareProperty -and -not [bool]$hardwareProperty.Value) { continue }
         if (Test-DisallowedAdapterName -Name ([string]$adapter.Name) -Description ([string]$adapter.InterfaceDescription)) { continue }
-        if ($profiles[$index] -ne 'Private') { continue }
+        $profile = $profiles[$index]
+        if ($profile -ne 'Private' -and -not ($AllowPublicProfile -and $profile -eq 'Public')) { continue }
 
         foreach ($ip in @(Get-NetIPAddress -InterfaceIndex $index -AddressFamily IPv4 -ErrorAction SilentlyContinue)) {
             if ($ip.SkipAsSource -eq $true) { continue }
@@ -192,7 +205,7 @@ function Get-SafeScanTargets {
                 address        = $range.ipAddress
                 cidr           = $range.cidr
                 hostCount      = $range.hostCount
-                profile        = $profiles[$index]
+                profile        = $profile
             }
         }
     }
@@ -213,7 +226,7 @@ function Confirm-ActiveScan {
     Write-Host ''
     Write-Host 'これから行う能動調査' -ForegroundColor Yellow
     foreach ($target in $Targets) {
-        Write-Host "  - $($target.adapterName) (ifIndex $($target.interfaceIndex)): $($target.cidr) / 最大 $($target.hostCount) 台" -ForegroundColor White
+        Write-Host "  - $($target.adapterName) (ifIndex $($target.interfaceIndex)): $($target.cidr) / 最大 $($target.hostCount) 台 / Windows: $($target.profile)" -ForegroundColor White
     }
     Write-Host "  合計の最大対象数: $totalHosts 台" -ForegroundColor White
     Write-Host '  LAN 内: ping、SSDP/mDNS、NetBIOS、HTTP、代表ポート確認' -ForegroundColor DarkGray
@@ -224,6 +237,10 @@ function Confirm-ActiveScan {
     }
     if ($IncludeSpeedTest) {
         Write-Host "  速度測定: Cloudflare へ最大 約 $($DownloadMB + $UploadMB) MB（下り $DownloadMB / 上り $UploadMB MB）" -ForegroundColor Yellow
+    }
+    if (@($Targets | Where-Object { $_.profile -eq 'Public' }).Count -gt 0) {
+        Write-Host '  注意: Windows で「パブリック」に設定された LAN が含まれます。' -ForegroundColor Yellow
+        Write-Host '        自分が所有・管理する LAN である場合だけ続けてください。' -ForegroundColor Yellow
     }
 
     if ($Approved) { return $true }
@@ -331,10 +348,10 @@ if ($PSCmdlet.ParameterSetName -eq 'Basic') {
     return
 }
 
-# Detailed モード: Private プロファイルの物理 NIC と RFC1918 /22～/30 のみ。
-$scanTargets = @(Get-SafeScanTargets -RequestedInterfaceIndex $ScanInterfaceIndex)
+# Detailed モード: 物理 NIC と RFC1918 /22～/30 のみ。Public は明示指定時だけ候補に含める。
+$scanTargets = @(Get-SafeScanTargets -RequestedInterfaceIndex $ScanInterfaceIndex -AllowPublicProfile:$AllowPublicProfile)
 if ($scanTargets.Count -eq 0) {
-    throw '安全に調査できる LAN がありません。ネットワークの種類を「プライベート」にし、物理 NIC の RFC1918 IPv4 (/22～/30) を使用してください。'
+    throw '調査できる LAN がありません。接続中の物理 NIC に RFC1918 IPv4 (/22～/30) があるか確認してください。Windows のネットワーク種別が「パブリック」の場合、CLIでは -AllowPublicProfile が必要です。'
 }
 $totalHosts = [int](($scanTargets | Measure-Object -Property hostCount -Sum).Sum)
 if ($totalHosts -gt $MaxScanHosts) {

@@ -18,7 +18,7 @@ BeforeAll {
     ))))
 
     . ([scriptblock]::Create((Get-ScriptFunctionSource -Path (Join-Path $scriptsDir 'Run-NetworkMapper.ps1') -Name @(
-        'Get-Ipv4ScanRange', 'Test-DisallowedAdapterName'
+        'Get-Ipv4ScanRange', 'Test-DisallowedAdapterName', 'Get-SafeScanTargets'
     ))))
 
     . ([scriptblock]::Create((Get-ScriptFunctionSource -Path (Join-Path $scriptsDir 'Test-NetworkHealth.ps1') -Name @(
@@ -473,6 +473,27 @@ Describe 'LAN 能動調査の許可範囲' {
         Test-DisallowedAdapterName -Name 'Tailscale' -Description 'Tunnel' | Should -BeTrue
         Test-DisallowedAdapterName -Name 'イーサネット' -Description 'Intel Ethernet Controller' | Should -BeFalse
     }
+
+    It 'Publicプロファイルは明示した場合だけ確認候補へ含める' {
+        Mock Get-NetConnectionProfile {
+            [PSCustomObject]@{ InterfaceIndex = 7; NetworkCategory = 'Public' }
+        }
+        Mock Get-NetAdapter {
+            [PSCustomObject]@{
+                Status = 'Up'; ifIndex = 7; Name = 'Ethernet';
+                InterfaceDescription = 'Physical Ethernet'; HardwareInterface = $true
+            }
+        }
+        Mock Get-NetIPAddress {
+            [PSCustomObject]@{ SkipAsSource = $false; IPAddress = '192.168.50.20'; PrefixLength = 24 }
+        }
+
+        @(Get-SafeScanTargets).Count | Should -Be 0
+        $targets = @(Get-SafeScanTargets -AllowPublicProfile)
+        $targets.Count | Should -Be 1
+        $targets[0].profile | Should -Be 'Public'
+        $targets[0].hostCount | Should -Be 254
+    }
 }
 
 Describe '安全な既定動作の回帰防止' {
@@ -516,6 +537,7 @@ Describe '安全な既定動作の回帰防止' {
 
         $launcher | Should -Match '(?s)''1''\s*\{\s*Invoke-LanReport\s+-LightMode\s+\$script:lightMode\s+-IncludeInternet\s*\}'
         $lanReport | Should -Match 'DetailedScan\s*=\s*\$true'
+        $lanReport | Should -Match 'AllowPublicProfile\s*=\s*\$true'
         $lanReport | Should -Match 'ExternalChecks\s*=\s*\$true'
         $lanReport | Should -Match 'SpeedTest\s*=\s*\$true'
         $lanReport | Should -Not -Match 'NoOpen'

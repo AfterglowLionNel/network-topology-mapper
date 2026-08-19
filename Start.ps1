@@ -316,7 +316,10 @@ function Invoke-LanReport {
         if ($sel -ne '2') { return }
     }
 
-    $parameters = @{ DetailedScan = $true }
+    $parameters = @{
+        DetailedScan       = $true
+        AllowPublicProfile = $true
+    }
     if ($LightMode) { $parameters.Light = $true }
     if ($IncludeInternet) {
         $parameters.ExternalChecks = $true

@@ -10,7 +10,8 @@ Windows PC から、自分が管理する LAN の構成とネットワーク不�
 
 - コマンドラインで引数なしの場合は、PC・NIC・既定ゲートウェイまでの基本診断だけを行います。LAN 全探索と外部サービス通信は行いません。
 - LAN の能動調査は `-DetailedScan` を指定したときだけです。対象 CIDR と最大台数を表示し、既定は `N` の確認を求めます。
-- 調査対象は、Windows で「プライベート」に設定された物理 NIC、RFC 1918 の IPv4 `/22`〜`/30`、合計最大 1,022 ホストに制限されます。
+- CLI の既定対象は、Windows で「プライベート」に設定された物理 NIC、RFC 1918 の IPv4 `/22`〜`/30`、合計最大 1,022 ホストに制限されます。
+- メニューのフル実行では「パブリック」の物理 NIC も候補として表示できますが、警告と対象範囲を確認して `y` を入力するまで調査しません。
 - 外部確認は `-ExternalChecks`、速度測定は `-SpeedTest` を明示したときだけです。
 - `-NoExternalServices` を付けると、対応モードの外部サービス通信を強制的に止められます。
 - 修復は許可済みの PC 設定だけを対象とし、実行前に内容を表示します。直前の変更はロールバックできます。
@@ -61,6 +62,9 @@ pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1
 
 # 対象範囲を表示し、確認後に詳細 LAN 調査
 pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DetailedScan
+
+# Windowsで「パブリック」のLANを確認対象に含める
+pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DetailedScan -AllowPublicProfile
 
 # CI などの非対話実行。対象 LAN を事前確認した場合だけ使用
 pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DetailedScan -ApproveActiveScan -NoOpen

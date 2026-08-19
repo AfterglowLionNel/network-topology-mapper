@@ -24,7 +24,7 @@ PowerShell 7 の方が詳細 LAN 調査は高速です。導入案内を選ん�
 
 開始前に対象 NIC、CIDR、最大ホスト数、外部通信、速度測定の通信量をまとめて表示します。内容を確認して `y` を入力した場合だけ開始し、完了後は HTML レポートを既定ブラウザで自動的に開きます。
 
-調査対象は「プライベート」に設定された物理 NIC と RFC 1918 IPv4 `/22`〜`/30` に限定されます。速度測定は下り約 180 MB、上り約 20 MB、合計約 200 MB が上限です。
+調査対象は物理 NIC の RFC 1918 IPv4 `/22`〜`/30` に限定されます。Windows のネットワーク種別が「パブリック」の場合は警告を表示するため、自分が管理する LAN だと確認できる場合だけ続けてください。速度測定は下り約 180 MB、上り約 20 MB、合計約 200 MB が上限です。
 
 ### [2] その他の機能
 
@@ -76,6 +76,9 @@ pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1
 
 # 確認付き詳細調査
 pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DetailedScan
+
+# 「パブリック」プロファイルの物理LANも確認候補に含める
+pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DetailedScan -AllowPublicProfile
 
 # 外部情報も含める詳細調査
 pwsh -NoProfile -File .\scripts\Run-NetworkMapper.ps1 -DetailedScan -ExternalChecks
