@@ -562,6 +562,8 @@ Describe '安全な既定動作の回帰防止' {
         $report | Should -Match '通信速度の実測値を表で見る'
         $report | Should -Match 'まだ測定値がありません。メニューの「フル実行」'
         $report | Should -Match 'aria-label=.*遅延・損失グラフ'
+        $report | Should -Match 'id\s*=\s*''health'';\s*label\s*=\s*''診断'';\s*html\s*=\s*\$healthSection'
+        $report | Should -Match 'id\s*=\s*''monitor'';\s*label\s*=\s*''モニタ'';\s*html\s*=\s*\(\$monitorSection\s*\+.*\$trendSection\)'
     }
 
     It '通知は文字列コードを生成せず固定ヘルパーへデータとして渡す' {

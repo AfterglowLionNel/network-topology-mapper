@@ -177,7 +177,7 @@ function Set-ScheduledScan {
     Write-Host "  定期実行の設定" -ForegroundColor Yellow
     Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
     Write-Host "  毎日決まった時刻に自動で診断/監視を行い、結果を蓄積します。" -ForegroundColor Gray
-    Write-Host "  溜まった結果はレポートの「診断」タブに推移グラフとして表示され、" -ForegroundColor Gray
+    Write-Host "  溜まった結果はレポートの「モニタ」タブに推移グラフとして表示され、" -ForegroundColor Gray
     Write-Host "  「先週より遅くなった」といった変化が分かるようになります。" -ForegroundColor Gray
     Write-Host ""
     Write-Host "    [1] 診断のみを毎日実行      約10秒 / 通信量ほぼゼロ" -ForegroundColor White

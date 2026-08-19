@@ -2856,11 +2856,11 @@ $neighborPanel = @"
 
 $tabs = @(
     @{ id = 'topology'; label = '構成図';   html = $topologyPanel }
-    @{ id = 'health';   label = '診断';     html = ($healthSection + "`n" + $trendSection) }
+    @{ id = 'health';   label = '診断';     html = $healthSection }
     @{ id = 'ai';       label = 'AI修正依頼'; html = $aiPromptPanel }
     @{ id = 'devices';  label = '機器';     html = ($historySection + "`n" + $routerSection + "`n" + $devicesSection + "`n" + $neighborPanel + "`n" + $neighbor6Section + "`n" + $ssdpSection) }
     @{ id = 'traffic';  label = '通信・回線'; html = ($internetSection + "`n" + $wanSection + "`n" + $bandwidthSection + "`n" + $connectionsSection + "`n" + $wifiSection + "`n" + $tracerouteSection + "`n" + $adapterPanel) }
-    @{ id = 'monitor';  label = 'モニタ';   html = $monitorSection }
+    @{ id = 'monitor';  label = 'モニタ';   html = ($monitorSection + "`n" + $trendSection) }
 )
 
 $tabNavHtml = ""

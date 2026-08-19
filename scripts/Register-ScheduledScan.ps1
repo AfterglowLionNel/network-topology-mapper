@@ -181,5 +181,5 @@ if ($Mode -eq 'Monitor' -or $Mode -eq 'Both') {
 Write-Host ""
 $scheduleText = if ($IntervalHours -gt 0) { "$IntervalHours 時間ごと（初回 $($startAt.ToString('yyyy-MM-dd HH:mm'))）" } else { "毎日 $($startAt.ToString('HH:mm'))" }
 Write-Host "スケジュール: $scheduleText" -ForegroundColor White
-Write-Host "結果は output\history に溜まり、次回レポート生成時に「診断値の推移」タブへ反映されます。" -ForegroundColor Gray
+Write-Host "結果は output\history に溜まり、次回レポート生成時に「モニタ」タブの「診断値の推移」へ反映されます。" -ForegroundColor Gray
 Write-Host "解除する場合: .\Register-ScheduledScan.ps1 -Unregister" -ForegroundColor Gray
